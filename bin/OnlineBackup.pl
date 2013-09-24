@@ -363,7 +363,7 @@ my $xmldir=OLBUtils::removeSpareSlashes("$currentprefix/$remotedir/$sepioladir/"
 
 # create the xml directory if it does not already exist and write
 # the 'backupStarted.xml' file to this directory
-OLBUtils::writeStartXML($id,$privkeyfile,$sshbin,$remotehost,$remoteuser,$xmldir,$startxml,$schedulerxml,$minuteSelected,$hourSelected,$logfile);
+OLBUtils::writeStartXML($id,$privkeyfile,$rsyncbin,$remotehost,$remoteuser,$xmldir,$startxml,$schedulerxml,$minuteSelected,$hourSelected,$logfile);
 
 # the prefix used for localdir shouldn't contain trailing slashes
 my $localdirprefix = $localdir;
@@ -1000,7 +1000,7 @@ sub terminate {
   }
 
   # write the endxml to the xml directory. 
-  OLBUtils::writeEndXML($id,$privkeyfile,$sshbin,$remotehost,$remoteuser,$xmldir,$endxml,$error,$logfile);
+  OLBUtils::writeEndXML($id,$privkeyfile,$rsyncbin,$remotehost,$remoteuser,$xmldir,$endxml,$error,$logfile);
 
   # check cause of termination
   if ($error < 0) {

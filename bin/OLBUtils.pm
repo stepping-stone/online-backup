@@ -15,6 +15,7 @@
 
 package OLBUtils;
 use Sys::Hostname;
+use File::Temp qw/ tempfile tempdir /;
 
 use strict;
 use vars (qw(@ISA @EXPORT));
@@ -668,11 +669,11 @@ sub readConf {
 
 sub writeStartXML{
 
-  my ($id,$privkeyfile,$sshbin,$remotehost,$remoteuser,$writedir,$startxml,$schedulerxml,$minuteSelected,$hourSelected,$logfile)=@_;
+  my ($id,$privkeyfile,$rsyncbin,$remotehost,$remoteuser,$writedir,$startxml,$schedulerxml,$minuteSelected,$hourSelected,$logfile)=@_;
 
   # command to test whether the .sepiola directory already exists in the
   # ~/incoming/remotedir directory on the backup-server
-  my $cmd="$sshbin $remoteuser\@$remotehost -i $privkeyfile 'ls -al $writedir'";
+  my $cmd="ssh $remoteuser\@$remotehost -i $privkeyfile 'ls -al $writedir'";
 
   # execute the command and capture return code. 
   system("$cmd >/dev/null 2>>$logfile");
@@ -686,7 +687,7 @@ sub writeStartXML{
   	if($return_code == 2){
 	  writeLog("Creating $writedir directory","",$logfile);
 	  print "Creating $writedir directory\n" if $::verbose>1;
-	  $cmd="$sshbin $remoteuser\@$remotehost -i $privkeyfile 'mkdir -p $writedir'";
+	  $cmd="$rsyncbin $remoteuser\@$remotehost -i $privkeyfile 'mkdir -p $writedir'";
 	  system($cmd);
   	}
 	# otherwise log the error
@@ -715,12 +716,16 @@ xsi:schemaLocation=\"http://xml.stepping-stone.ch/schema/backup_started backup_s
 	<startdate>$date</startdate>
 	<id>$id</id>
 </backup_started>";
+
+  # Create a safe temporary file
+  my ($tempfile, $tmp_filename) = tempfile();
+  
+  # Write the XML string to the XML file
+  print $tempfile $XMLString;
   
   # generate the command to write the XML string to the file on the
   # remotehost
-  $cmd="ssh $remoteuser\@$remotehost -i $privkeyfile 'cat << EOF >$writedir/$startxml
-$XMLString
-EOF'";
+  $cmd="$rsyncbin -e \"ssh -i $privkeyfile\" $tmp_filename $remoteuser\@$remotehost:$writedir/$startxml";
 
   # execute the command and analyse the return code
   system("$cmd >/dev/null 2>>$logfile");
@@ -734,6 +739,9 @@ EOF'";
 	writeLog("$startxml written","",$logfile);
 	print "$startxml written\n" if $::verbose>1;
   }
+  
+  # Remove the tempfile
+  unlink ( $tmp_filename );
 
   # Now write the scheduler file to the same directory
   # extract the timezone from the date string.
@@ -770,9 +778,14 @@ xsi:schemaLocation=\"http://xml.stepping-stone.ch/schema/online_backup_schedule 
  
 </online_backup_schedule>";
 
-  $cmd="ssh $remoteuser\@$remotehost -i $privkeyfile 'cat << EOF >$writedir/$schedulerxml
-$schedulerString
-EOF'";
+  # Create a safe temporary file
+  my ($scheduler_tempfile, $scheduler_tmp_filename) = tempfile();
+  
+  # Write the XML string to the XML file
+  print $scheduler_tempfile $schedulerString;
+
+
+  $cmd="$rsyncbin -e \"ssh -i $privkeyfile\" $scheduler_tmp_filename $remoteuser\@$remotehost:$writedir/$schedulerxml";
 
   # execute the command and analyse the return code
   system("$cmd >/dev/null 2>>$logfile");
@@ -787,13 +800,15 @@ EOF'";
 	print "$schedulerxml written\n" if $::verbose>1;
   }
 
+  # Remove the tmpfile
+  unlink ( $scheduler_tmp_filename );
 
 }
 
 
 sub writeEndXML{
 
-  my ($id,$privkeyfile,$sshbin,$remotehost,$remoteuser,$writedir,$endxml,$error,$logfile)=@_;
+  my ($id,$privkeyfile,$rsyncbin,$remotehost,$remoteuser,$writedir,$endxml,$error,$logfile)=@_;
 
   # now we can write the backupStared.xml file to this directory
   writeLog("Writting $endxml","",$logfile);
@@ -823,12 +838,16 @@ xsi:schemaLocation=\"http://xml.stepping-stone.ch/schema/backup_ended backup_end
 	<id>$id</id>
 	<success>$success</success>
 </backup_ended>";
+
+
+  # Create a safe temporary file
+  my ($tempfile, $filename) = tempfile();
   
-  # generate the command to write the XML string to the file on the
-  # remotehost
-  my $cmd="ssh $remoteuser\@$remotehost -i $privkeyfile 'cat << EOF >$writedir/$endxml
-$XMLString
-EOF'";
+  # Write the XML string to the XML file
+  print $tempfile $XMLString;
+  
+  # generate the command to upload the tempfile to the backup server
+  my $cmd="$rsyncbin -e \"ssh -i $privkeyfile\" $filename $remoteuser\@$remotehost:$writedir/$endxml";
 
   # execute the command and analyse the return code
   system("$cmd >/dev/null 2>>$logfile");
@@ -842,6 +861,9 @@ EOF'";
 	writeLog("$endxml written","",$logfile);
 	print "$endxml written\n" if $::verbose>1;
   }
+  
+  # Remove the temporary file
+  unlink( $filename );
 
 }
 
