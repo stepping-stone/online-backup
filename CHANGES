@@ -1,0 +1,303 @@
+Version 1.1
+-----------
+OnlineBackup.pl:
+- Introduced lockfile mechanism to avoid unwanted running multiple instances with configurable timeout for running again and deleting the lockfile automatically
+
+Version 1.2
+-----------
+OnlineBackup.pl:
+- replaced all "die" calls with own function "terminate", which writes an error message to the log file and print it on the console
+- understandable error messages for missing configuration parameters 
+- moved definition of default variable settings to the beginning of the script
+- completely rewritten inclusion / exclusion mechanism because it caused many bugs while setting back permissions (with permission script)
+- fixed bugs concerning alternate root path by using LOCALDIR configuration variable
+- fixed issues with filenames containing whitespaces or special characters (quoting)
+- improved runtime behaviour, like unneccessary performance lacks and waste of memory (by writing output of rsync directly to the log file instead collecting all in a variable) -> by the way, you can now see the output of rsync while OnlineBackup is still at work and you see what was done until now when the scripts aborts
+- handling of signals INT, QUIT and TERM (by hitting CTRL-C or using of kill) and deleting lock file
+- better readable debug output
+- introduction of verbosity levels for console
+- added capability to use shell variables in includefile
+
+OnlineRestore.pl:
+- New feature to restore only a part of the backup by specifing a start path with the -f / --from option
+- No more restore with permissions because they would be wrong, specially for parent paths not included in the backup, hence also not in the permission script which restores the permissions of all backed up files
+- fixed bugs concerning alternate root path by using LOCALDIR configuration variable
+- improved runtime behaviour, like unneccessary performance lacks and waste of memory (by writing output of rsync directly to the log file instead collecting all in a variable) -> by the way, you can now see the output of rsync while OnlineBackup is still at work and you see what was done until now when the scripts aborts
+- handling of signals INT, QUIT and TERM (by hitting CTRL-C or using of kill) and deleting lock file
+- better readable debug output
+- introduction of verbosity levels for console
+
+Version 1.3
+-----------
+- Added support for a new feature of rsync that allows to use a dir/*** directive (with 3 trailing stars) to match both the dir itself as well as all the content below the dir (dir/** would not match the dir).
+- Avoided that special and device files get into the permission script
+- Bugfixes with quoting of metacharacters in exclusion configuration files
+
+Version 1.4
+-----------
+- Corrected several bugs when interpreting regex meta characters within character classes
+- Added some wait time to avoid race condition when killing a longrunning OnlineBackup process, which in turn removes its logfile after the new one of current process was already written
+
+Version 1.5
+-----------
+- Corrected bugs with meta characters where perl regex is used (character classes)
+- Corrected bug with older rsync version excluding current directory with multiple asterisks by error
+- Clearer distinguishing between not being able to call rsync and errors occuring during transfer
+
+Version 1.6
+-----------
+- Use file list from rsync if used version supports that
+- New configuration option RSYNCLIST to determine if rsync list or the internal include/exclude mechanism should be used
+- Corrected missing symlink permissions
+- Corrected wrong message if permission script had errors
+- New configuration option RSYNCBIN for configuring location of rsync binary
+- Check if rsync binary is available at configured path and abort properly if not
+- Rewritten part to use variables in include file so that multiple variables and backslash quoting also work properly
+- Corrected a problem in permission script when excluded a directory containing multi-line filenames that had stopped skipping of files in that directory
+- Corrected parsing not like rsync does of CR in exclude file for permission script
+- Deleting temporary filelist when being killed
+- Corrected interpretation of backslash (\) in a file name for setting permissions if only a closing bracket (]) is present in exclude rule
+
+Version 1.7
+-----------
+- Backup and Restore special files like devices and named pipes
+- Backup and Restore symbolic and hard links correctly with their permissions
+
+OnlineBackup.pl:
+- setting read permission to owner on backup host if rsync version supports the chmod option
+- Fixed bug character classes and slash in rules not avoided if include was root (/)
+- Added more comments / code descriptions
+- Corrected wrong usage example
+- Avoid incorrect statements in permission scripts for files that don't exist anymore when actually writing the script
+- Fixed bug calling setpwent instead of setgrent (and thus resetting user list instead of group list) in fmt_gid
+- Moved global variable declaration used by fmt_uid and fmt_gid to begin of script so it really defines them with the intended values
+- Now all signals not known as severe condition are being caught and program will terminate properly (by means of cleaning up lockfile and temporary files)
+- Fixed bugs in permission script within character classes
+- Output more variable content in debug verbosity level (4) 
+- Fixed errornous second replacement of regex pattern for not matching the slash
+- Fixed not transferred symlinks whose target does not exists
+- Redirected standard error output when generating file list using rsync to logfile
+- write directories with trailing slash to permission script (so directories could be distinguished from files)
+
+OnlineRestore.sh (shell script if no PERL is available):
+- runs permission script with chroot to destination
+
+OnlineRestore.pl:
+- New subroutine cropPermscriptByList which uses the file list provided by rsync for tailoring permission script to only set permissions to restored items 
+- renamed subroutine cropPermscript to cropPermscriptByRules as a fallback alternative to the file list provided by rsync if that not works
+- adapted cropPermscriptByRules to follow the rules rsync uses with patterns like *,? or [] (character classes) - but as a best effort only...
+- Redirected standard error output to log file when generating file list
+- Deciding on available rsync features for what sort of file list for permission script to be used like in OnlineBackup.pl 
+
+Version 1.8
+-----------
+- Centralized common routines for backup and restore in perl module OLUtils.pm
+
+OnlineBackup.pl:
+- Correctly support exclusion of lines beginning with "plus <space>" combination with prefixed "-" (- + xxxx) like rsync does
+- Circumvent a bug in rsync 2.6.4 that ignores the minus <space> combination before an exclamation mark and therefore resets the exclusion list
+- New option/switch REMOTEPERMS to force setting permissions on backup host (necessary to be able to write new / changed files to directories where the user has no write permissions because of older versions that set the permissions like on the source)
+- Allowing also ; as a comment mark in configuration file as in include- and exclude files
+- Adpated interpretation of recursion of a rule as changed in OLBUtils
+- Removed 2nd replace of localdirprefix which caused errors in permission script when same path was used beneath localdir
+- Removed 2nd replace of + sign at the beginning of a line in excludeItem which might occur in some circumstances and then produces a wrong permission line
+- Corrected issue that permissions of not readable directories were not set 
+- Report about ignored special files that aren't possible to copy or re-create (like sockets)
+- Fixed issue that lock file timeout is calculated wrong during daylight saving time (DST)
+- Make abort and exit with errors distinguishable by returning the negative exit codes when aborting
+
+OLBUtils.pm:
+- Fixed interpretation of backslashes in subroutine replaceWildcards
+- Fixed handling of plus / minus in file names
+- Added subroutine isEscapedMetachar from OnlineRestore.pl
+- Also handle exclamation mark on the beginning of a character class as negation
+- Fixed replacement of single asterisk for anything but a slash so literal asterisks are untouched
+- Information about recursion of a given rule in findMatch passed as a seperate parameter instead of storing within paths (gotcha if "mark" is used lterally...)
+- More detailed reporting about failures in calling rsync
+- Export (only) all functions needed by backup- and restore-scripts
+- removeSpareSlashes: also remove trailing slash in multi-line names
+- isCharClass: Corrected setting begin and end of character classes when square brackets occur within (closing square bracket ends a character class if not part of a POSIX class)
+- replaceWildcards: Corrected inserting a look forward for not matching a slash of a square bracket so it will only be applied on the first subsequent one (which is introducing a character class)
+- replaceWildcards: added handling of replacement only in character classes because of false positive in recognizing wrong/disallowed  POSIX named classes
+- Removed marking dots at beginning and end of a nested character class ([. .]) as disallowed class because all of the characters within such a class in fact are interpretated literally
+- Error message in log file when rsync version cannot be determined
+
+OnlineRestore.pl:
+- Correctly evaluate wildcard character escaping by using replaceWildcards
+- Fixed handling of backslashes 
+- Moved subroutine isEscapedMetachar to OLBUtils.pm
+- Only check for depth of restore path instead of doing a full regex compare when using rsync file list
+- Fixed parsing of output for gathering file list
+- Adpated interpretation of recursion of a rule as changed in OLBUtils.pm
+- Check version of rsync is recent enough to work with
+- Make abort and exit with errors distinguishable by returning the negative exit codes when aborting
+
+Version 1.9
+-----------
+
+OnlineBackup.pl:
+- Quote all configured paths/files
+- Always show whole variable setting line in usage example
+- Avoid that multiline filenames are passed to rsync because that leads to wrong filenames
+- Avoid that dot (.) and double-dot (..) for parent dir are matched in include file (so its not possible to specify directory above localdir)
+
+OnlineRestore.pl:
+- Quote all configured paths/files
+- Always show whole variable setting line in usage example
+- Small correction of slashes within angle brackets were not correctly interpreted from restorepath
+- Small change in history comment
+
+OLBUtils.pm:
+(no changes)
+
+Version 1.9a
+------------
+
+OnlineBackup.pl:
+(no changes)
+
+OnlineRestore.pl:
+- adapted restore of permissions using rsync list for current rsync version (2.6.9)
+
+OLBUtils.pm:
+(no changes)
+
+Version 1.9b
+------------
+
+OnlineBackup.pl:
+(no changes)
+
+OnlineRestore.pl:
+- corrected verbosity level not effective within library functions
+
+OLBUtils.pm:
+(no changes)
+
+Version 1.10
+------------
+
+OnlineBackup.pl:
+- allow to use numeric user and group ids for permissions so restore can be done outside the target system; added new configuration option for turning on this
+
+OnlineRestore.pl:
+(no changes)
+
+OLBUtils.pm:
+(no changes)
+
+Version 1.11
+------------
+
+OnlineBackup.pl:
+- delete excluded files on remote side by default, allow to disable per configuration
+
+OnlineRestore.pl:
+(no changes)
+
+OLBUtils.pm:
+(no changes)
+
+Version 1.12
+------------
+
+OnlineBackup.pl:
+- added storage of partition information for recovery, therefore added two new options, SFDISKBIN for sfdisk binary and PARTITIONFILE for the file where partition information will be stored
+
+OnlineRestore.pl:
+(no changes)
+
+OLBUtils.pm:
+(no changes)
+
+Version 1.13
+------------
+
+OnlineBackup.pl:
+- removed default remotehost
+
+OnlineRestore.pl:
+- removed default remotehost
+- fixed permissions not being set for permission script on partial restore when using rsync list
+
+OnlineBackup.conf.default:
+- Changed default snapshot prefix to ~/.snapshots so it works with new backup server
+- Moved VERBOSE setting to the begin so all configuration settings applied are shown when using a higher verbosity level
+
+OnlineRestore.sh:
+- removed default remotehost
+- made some status messages to appear if verbose flag in configuration file is set
+
+Version 1.14
+------------
+
+OnlineBackup.pl:
+- first thing in the backup process is not to call the writeStartXML method
+- in terminate method we call the writeEndXML method
+
+OnlineRestore.pl:
+(no changes)
+
+OnlineBackup.conf:
+- section for backup surveillance added
+
+OnlineRestore.sh:
+(no changes)
+
+OLBUtils.pm:
+- methods writeStartXML and writeEndXML implemented. 
+- XML files are written to on the server to be able to observe the backup status
+
+Version 2.0
+------------
+
+OnlineBackup.pl:
+- Reading the new variables from the configuration file and passing it to the writeStartXML method to be able to write also the scheduler XML-file.
+
+OnlineRestore.pl:
+(no changes)
+
+OnlineBackup.conf:
+- section for backup scheduling added
+
+OnlineRestore.sh:
+(no changes)
+
+OLBUtils.pm:
+- The method writeStartXML now also writes the scheduler XML-file on the server. The time of the crontjob is passed from the configuration file
+
+Version 2.0.1
+-------------
+
+OnlineBackup.pl:
+- If during the rsync process some files vanish, it is no longer treated as an error
+
+OnlineRestore.pl:
+(no changes)
+
+OnlineBackup.conf:
+(no changes)
+
+OnlineRestore.sh:
+(no changes)
+
+OLBUtils.pm:
+(no changes)
+
+Version 2.0.2
+-------------
+
+OnlineBackup.pl:
+(no changes)
+
+OnlineRestore.pl:
+- Location /var/lib/OnlineBackup is by default included in backup
+
+OnlineBackup.conf:
+(no changes)
+
+OnlineRestore.sh:
+(no changes)
+
+OLBUtils.pm:
+(no changes)

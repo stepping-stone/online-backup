@@ -1,0 +1,16 @@
+##############################################################################
+# OnlineBackupExcludeFiles.conf
+##############################################################################
+# Description:
+#  Please add the files and/or directories to be excluded from the backup
+#  on a line each.
+#  If you add a directory, the directory, all the subdirectories and files
+#  below will be excluded from the backup.
+#  The following wildcards can be used:
+#  - asterisk (*) and question mark (?)
+#  Avoid empty lines and whitespaces!
+##############################################################################
+# Normally, the /proc and /sys directories backuped.
+/proc/*
+/sys/*
+dead.letter

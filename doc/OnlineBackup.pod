@@ -1,0 +1,741 @@
+=for comment
+This document is in Pod format.  To read this, use a Pod formatter, like "perldoc perlpod".
+
+=head1 Online Backup for UNIX
+
+=head1 1 Introduction
+
+This tool is primary intended to create backups using the backup infrastructure provided by stepping stone GmbH, but can be used to transfer data to to quite every remote host with installed rsync and accessible over SSH accepting private key authentication.
+
+=head2 1.1 Prerequisites
+
+The following requirements must be met to run the scripts:
+
+=over
+
+=item *
+
+UNIX Operating System like Linux / FreeBSD / MacOS X
+
+=item *
+
+PERL 5.6.0 or higher
+
+=item *
+
+rsync 2.6.0 or higher
+
+=item *
+
+service / host to store your backup with ssh public key access
+
+=back
+
+=head2 1.2 Download
+
+=begin html
+
+<a href="OnlineBackup.tgz">Get Online Backup for UNIX</a>
+
+=end html
+
+=head2 1.3 New Installation
+
+To install Online Backup for UNIX, follow these steps:
+
+=over
+
+=item 1.
+
+Change to the directory where you wish OnlineBackup be installed (by default, the archive will be extracted to a subdirectory OnlineBackup):
+
+C<< cd /root >>
+
+=item 2.
+
+Unpack the gzipp'ed tar archive OnlineBackup.tgz:
+
+C<< gunzip -c ~/Download/OnlineBackup.tgz | tar xvf - >>
+
+=item 3.
+
+Change to the newly created directory OnlineBackup:
+
+C<< cd OnlineBackup >>
+
+=item 4.
+
+Copy or move OnlineBackup.conf.default, OnlineBackupExcludeFiles.conf.default and OnlineBackupIncludeFiles.conf.default to the same name without ".default" suffix (only on a new installation):
+
+C<< cp OnlineBackup.conf.default OnlineBackup.conf >>
+
+C<< cp OnlineBackupIncludeFiles.conf.default OnlineBackupIncludeFiles.conf >>
+
+C<< cp OnlineBackupExcludeFiles.conf.default OnlineBackupExcludeFiles.conf >>
+
+=item 5.
+
+Edit B<OnlineBackup.conf>, at least you should set/change the following important parameters:
+
+C<< REMOTEUSER=<username on remote host> >>
+
+C<< PRIVKEYFILE=<path of your private key file> >>; Please make sure that this key isn't protected with a passphrase if you want to run the backup script automatically, e.g. as a cron job!
+
+If you back up to another host than to the stepping stone backup system (or if you're not a customer of stepping stone GmbH) set:
+
+C<< REMOTEHOST=<fully qualified host name> >>
+
+C<< CURRENTPREFIX=<subdirectory under user's home directory> >>; Parent path must exist on remote host!
+
+Further options you may set are described under L<4.1 Main configuration file>
+
+=item 6.
+
+Edit B<OnlineBackupIncludeFiles.conf> and add all files and directories that you want to back up on a seperate line. Please see the examples within the file. Note that all files and directories under a given directory will also be backed up! 
+
+B<Important:> Make sure to include also the path you have assigned to parameter PERMSCRIPT in main configuration file because this file contains important information used for restoring permissions and ownerships!
+
+More detailed description about wildcard patterns, etc. you will find under L<4.2 Inclusion configuration file>
+
+=item 7.
+
+Edit B<OnlineBackupExcludeFiles.conf> and add all files or directories that you want to exclude on a seperate line. Please see the examples within the file. Note that all files and directories under a given directory will also be excluded!
+
+More detailed description about wildcard patterns, etc. you will find under L<4.3 Exclusion configuration file>
+
+=item 8.
+
+You should drive a test to see if all works:
+
+C<< ./OnlineBackup.pl >>
+
+The script should finish with exit code 0. Check with
+
+C<< echo $? >>
+
+Then check the logfile you had configured in main configuration file, e.g. with
+
+C<< cat OnlineBackup.log >>
+
+If a message "Backup finished with errors" appers, then something went wrong, see messages above to see the cause and also consult L</6 Troubleshooting>.
+
+Also check the files on the remote host or better, do a restore to a test directory with:
+
+C<< /root/OnlineBackup/OnlineRestore.pl -s current -c /root/OnlineBackup/OnlineBackup.conf -d /var/tmp/test_restore/ >>
+
+If you have a huge amount of data, you may restore only a small subset of your files, e.g. only the path /home/test2/test:
+
+C<< /root/OnlineBackup/OnlineRestore.pl -s current -c /root/OnlineBackup/OnlineBackup.conf -d /var/tmp/test_restore/ -f /home/test2/test >>
+
+=item 9.
+
+If all went as you expected, you want to add the script for regularly execution to your crontab, e.g. to run your backup at 03:10 every night:
+
+C<< 10 3    * * *      root    /root/OnlineBackup/OnlineBackup.pl -c /root/OnlineBackup/OnlineBackup.conf >>
+
+B<Important>: Please make sure that you account for the Online Backup logfile (per default OnlineBackup.log) in your logfile rotation mechanism else it will grow forever!
+
+=back
+
+=head2 1.4 Update
+
+To update Online Backup for UNIX to a newer version, follow these few steps:
+
+=over
+
+=item 1.
+
+Change to the directory where Online Backup for UNIX was installed (by default, the archive will be extracted to a subdirectory OnlineBackup):
+
+C<< cd /root >>
+
+=item 2.
+
+Unpack the gzipp'ed tar archive OnlineBackup.tgz:
+
+C<< gunzip -c ~/Download/OnlineBackup.tgz | tar xvf - >>
+
+Important: Please extract the whole tar file, even if you had installed only OnlineBackup.pl and OnlineRestore.pl, because new files may have been added and are needed (e.g. OnlineBackup.pm)!
+
+If you followed this guide, your configuration files won't be overwritten. Instead, you will find *.default files, B<OnlineBackup.conf.default> contains examples for using new parameters.
+
+=item 3.
+
+Change to the newly created directory OnlineBackup:
+
+C<< cd OnlineBackup >>
+
+=item 4.
+
+Test to see if all works:
+
+C<< ./OnlineBackup.pl >>
+
+Then check the logfile you configured in main configuration file, e.g. with
+
+C<< cat OnlineBackup.log >>
+
+If a message "Backup finished with errors" appers, then something went wrong, see messages above to see the cause and also consult L</6 Troubleshooting>.
+
+Also check the files on the remote host or better, do a restore to a test directory with:
+
+C<< /root/OnlineBackup/OnlineRestore.pl -s current -c /home/mike/OnlineBackup/OnlineBackup.conf -d /var/tmp/test_restore/ >>
+
+If you have a huge amount of data, you may restore only a small subset of your files, e.g. only the path /home/test2/test:
+
+C<< /root/OnlineBackup/OnlineRestore.pl -s current -c /home/mike/OnlineBackup/OnlineBackup.conf -d /var/tmp/test_restore/ -f /home/test2/test >>
+
+=back
+
+=head1 2 Backup
+
+=head2 2.1 OnlineBackup.pl
+
+With OnlineBackup.pl, a backup of the whole system or a part of it can be created on the backup facility, from now on called the "backup host". The script accepts the following parameters:
+
+C<< OnlineBackup.pl -c <configuration file> >>
+
+All settings are controlled by its main configuration file, by default called OnlineBackup.conf. See chapter 4 Configuration.
+
+=head2 2.2 Principle of function
+
+Here's a short description of how OnlineBackup.pl works internally:
+
+=over
+
+=item *
+
+The programme first reads its parameter and the configuration files
+
+=item *
+
+It checks if another instance of OnlineBackup.pl is already running by looking for the configured lock file. If this file exists, it compares the time it is running already with the configured allowed running time. If the already running instance runs for a longer time than allowed, it considers it as "hung" and tries to abort it. If it was successful, the current instance continues, else it will terminate. That means the programme will cease its operation until the lock file is deleted manually.
+
+=item *
+
+Now it writes a lock file to avoid other instances with the same lock file configured from running. Thus with different lock files, you may run the script more than once at a time, if you really want that.
+
+=item *
+
+Then OnlineBackup.pl gets all the files listed in INCLUDEFILE, and globs pattern meta characters like *,? or [...]
+
+=back
+
+Now, there are 2 ways we can get the acutal directories/files (see chapter 5 - Permission script).
+
+If file list from rsync can be used:
+
+=over
+
+=item *
+
+rsync will be called with the parameter --list-only and -8 (for only building a list of file that should to be transferred)
+
+=item *
+
+Get the path part of the file list for every item to be transferred, skip socket files because they cannot be created on the remote side
+
+=item *
+
+Replace control characters escaped by \#ddd with \ddd
+
+=item *
+
+Compose a sorted list of files / directories to be backed up
+
+=back
+
+If file list must be compiled by ourselves:
+
+=over
+
+=item *
+
+Prepare a (couple of) line(s) containing matching patterns to a regular expression line which behaves like used by rsync
+
+=item *
+
+For every included item check against the exclude/don't exclude rules that are listed in EXCLUDEFILE
+
+=item *
+
+If an exclude rule matches, the script checks for some rules that make the rule invalid (e.g. slashes in character classes or negated named classes)
+
+=item *
+
+The script checks if include rules avoid the item to be excluded
+
+=item *
+
+Compose a sorted list of files / directories to be backed up
+
+=back
+
+---
+
+=over
+
+=item *
+
+The script creates a list of permissions (called the permission script) which records the permissions of all files to be backed up. This is necessary, because rsync likely isn't able to set the exact user and group on the remote system due to access restrictions on the backup host.
+
+=item *
+
+Then it will call rsync which actually transfers the files to be backed up to the backup host. Rsync will be called like this:
+
+C<< rsync --exclude-from=<EXCLUDEFILE>  --delete -rlHtvze "ssh -i <PRIVKEYFILE>" --files-from=- <LOCALDIR> <REMOTEUSER>@<REMOTEHOST>:/<CURRENTPREFIX>/<REMOTEDIR> >>
+
+(standard input is used for the files-from option, because we must glob the contents of <INCLUDEFILE> before)
+
+=item *
+
+The script protocols its activities to a log file, by default called OnlineBackup.log in the current directory.
+
+=back
+
+=head1 3 Restore
+
+=head2 3.1 OnlineRestore.pl
+
+With OnlineRestore.pl, you can restore the entire backup or some files out of the backup from backup host to your local machine. The configuration will be read from main configuration file, by default OnlineBackup.conf in the current directory.
+
+The script accepts the following parameters:
+
+C<< OnlineRestore.pl -s <snapshot> [-c configfile] [-f from] [-d destination] where <snapshot> can be current | daily.0-6 | weekly.0-3 | monthly.0-11 >>
+
+=over 1
+
+=item -s	Snapshot:	(mandatory)
+
+B<current:>		the last backed up data
+
+B<daily.0-6:>	the daily snapshot from last day to 7 days in the past
+
+B<weekly.0-3:>	the weekly snapshot from the last back to 4 weeks
+
+B<monthly.0-11:>	from the last to 12 months in the past
+
+=back
+
+=over 1
+
+=item -c	Configuration file:	(optional) 
+
+to use another configuration file than OnlineBackup.conf
+
+=back
+
+=over 1
+
+=item -f 	Source (From) path for partial restore:	(optional)
+
+path starting from where items should be retrieved
+
+- You may use wildcards (*, ? or [...]) only in the last part of the path, elsewhere they will be matched as literal characters
+
+- If you need to match a backslash before using a wildcard, you have to double it (e.g. \\) so the wildcard isn't matched literally
+
+=item -d	Destination (To) path for redirected restore:	(optional)
+
+path where to restore the items
+
+=back
+
+B<Example:>
+
+C<OnlineRestore.pl -s daily.5 -c /root/backup.conf -f /home/test/ -d /var/tmp/restore>
+
+A note about empty / pass-through directories: That are directories, which only are for "passing through" because items are included somewhere deeper than the root ("/") or in a deeper path that was included by an entry in INCLUDEFILE while the parent path itself is excluded by EXCLUDEFILE. Those permissions will not be touched during restore, because, with a partial restore, it's probably a bad thing to overwrite permissions of directories not intended to be restored.
+
+=head2 3.2 Disaster Recovery
+
+This is a short step-by-step guide that tells you how to restore your linux machine from the backup (we used gentoo linux for writing this guide, but the process should be quite similar with other distributions):
+
+=over
+
+=item 1.
+
+Boot install, live or rescue cd
+
+=item 2.
+
+Make sure that networking is started by issuing ifconfig.
+If not, load the appropriate kernel module for your ethernet card with
+
+C<< modprobe <modulename> >>
+
+then start the network with
+
+C</etc/init.d/net.eth0 >
+
+=item 3.
+
+Get the archive OnlineBackup.tgz, e.g.
+
+C<wget http://www.cyberbyte.ch/Linux/OnlineBackup/OnlineBackup.tgz>
+
+=item 4.
+
+Unpack the archive in your home directory:
+
+C<tar xvzf OnlineBackup.tgz>
+
+=item 5.
+
+Make sure the ssh key file used for backup (by default backup_id_dsa) is accessible from the livecd / rescue system and has proper permissions, because SSH refuses using it if not, e.g.
+
+C<chmod 400 .ssh/backup_id_dsa>
+
+=item 6.
+
+Get /etc/fstab or /etc/mtab from Online Backup Server, e.g.
+
+C<< scp -o IdentityFile=.ssh/backup_id_dsa <USER>@online-backup.stepping-stone.ch:/incoming/<REMOTEDIR>/etc/fstab . >>
+
+=item 7.
+
+Recreate the partitions on the empty harddisk like on the system to be restored. If you have backed up the partition table with OnlineBackup.pl, get the partitions file and read the partition table out of it:
+
+C<< scp -o IdentityFile=.ssh/backup_id_dsa <USER>@online-backup.stepping-stone.ch:/incoming/<REMOTEDIR>/root/OnlineBackup/.Partitions.txt . >>
+
+C<< sfdisk /dev/hda < .Partitions.txt >> (or how ever you named the file containing partition information as parameter PARTITIONFILE within OnlineBackup.conf)
+
+Then have a look at your file system table (fstab) and create a file system on each partition, e.g you had ext3 partitions on the system:
+
+C<< mke2fs -j /dev/hda<N> >> 
+
+...
+
+C<< mke2fs -j /dev/hda<N> >> 
+
+C<< mkswap /dev/hda<N> >>
+
+=item 8.
+
+I<This step is only necessary if you have excluded /dev, possibly because you use udev.>
+
+Find your boot device, note the link target and file information about the boot disk block device and the boot partition block device under /dev/, e.g.
+
+C<cat fstab> (find line with /boot in the second column, hda is the disk device, hda3 would be the partition device)
+
+C<ls -l /dev/hda /dev/hda3> (for the link target) and
+
+C<ls -l -L /dev/hda /dev/hda3> (for the dereferenced file information) of the target you want to restore to
+
+=item 9.
+
+Mount the root partition under /mnt/gentoo (or an existing, empty directory of your choice, but note this path as the root of installation), all other partitions relative to /mnt/gentoo, e.g. the var partition under /mnt/gentoo/var, etc. You'll have to create the directories first!
+
+=item 10.
+
+- Change to the OnlineBackup directory with C<cd OnlineBackup>.
+
+- Copy/Move B<OnlineBackup.conf.default> to B<OnlineBackup.conf> and modify it as needed, important parameters:
+
+B<REMOTEUSER> and B<PRIVKEYFILE>
+
+B<RSYNCBIN> to C<$HOME/OnlineBackup/rsync> (test if needed to define by typing C<which rsync>) 
+
+B<SSHBIN> to the path of ssh if necessary (test if needed to define by typing C<which ssh>)
+
+B<PERMSCRIPT> to the path it was written on the original installation
+
+
+=item 11.
+
+Start the restore process with:
+
+C<./OnlineRestore.sh current|daily.x|weeky.x|monthly.x OnlineBackup.conf /mnt/gentoo> (new root path)
+
+If you get error messages showing files are searched at a wrong home directory, e.g. "/" instead of "/root", try this:
+
+C<HOME=/root ./OnlineRestore.sh current|daily.x|weeky.x|monthly.x OnlineBackup.conf /mnt/gentoo> (new root path)
+
+
+=item 12.
+
+Change root into the restored environment with:
+
+C<chroot /mnt/gentoo /bin/bash>
+
+=item 13.
+
+I<This step is only necessary if you have excluded /dev, possibly because you use udev.> 
+
+- Recreate the device node where grub was installed, because it isn't visible yet in your restored root, as noted in step 8, e.g.:
+
+C<mknod -m 600 /dev/hda b 3 0>
+
+- Recreate the partition device node where grub was installed, mostly the ancient /boot partition, as noted in step 8, e.g.:
+
+C<mknod -m 600 /dev/hda3 b 3 3>
+
+=item 14.
+
+Run grub and execute the following commands, e.g. if you had installed gentoo linux on the 1st disk on primary ide controller, and used the 3rd partition for /boot:
+
+C<grub >
+
+Within grub:
+
+C<root (hd0,2)>
+
+C<setup (hd0)>
+
+C<quit >
+
+=item 15.
+
+Leave the chroot environment with
+
+C<exit >
+
+=item 16.
+
+Reboot the system to boot into phoenix!
+
+=back
+
+=head1 4 Configuration
+
+There are three files to configure operations of OnlineBackup. If a line begins with a "#" (hash mark), it will be seen as a comment, thus ignored.
+
+=head2 4.1 Main configuration file
+
+Following configuration options are available in the main configuration file:
+
+ Parameter	Description					Default Value
+ REMOTEUSER	User on the backup host				<none>
+ PRIVKEYFILE	Path / file containing the SSH private key	<none>
+ INCLUDEFILE	Path / file containing items
+ 		to be backed up					<none>
+ EXCLUDEFILE	Path / file containing items to exclude (skip)	<none>
+ DELETEEXCLUDED	Delete existing remote files when excluded	1
+ PERMSCRIPT	Path / filename of permission script		<none>
+ NUMERICOWNERS	Numeric IDs for users and groups instead
+		of names within permission script		0
+ LOGFILE	Path / filename of logfile to be written	OnlineBackup.log
+ LOCKFILE	Lockfile to avoid running multiple instances
+ 		of OnlineBackup.pl				/var/lock/OnlineBackup.lock
+ LOCKTIMEOUT	Timeout after which the script wil try to abort
+ 		another running instance			23 hours
+ TEMPDIR	Temporary directory for inclusion list if
+		rsync file list is used				/var/tmp/
+ RSYNCBIN	Path of rsync binary				
+ 		if no absoulte path is specified, rsync will
+		be searched with help of PATH env. var.		rsync
+ RSYNCLIST	Mechanism to be used for finding files
+ 		for permission script
+ 		0 = Use internal include/exclude mechanism
+ 		1 = Use rsync file list if rsync provides
+		--list-only and -8 Parameters			1
+ SSHBIN		Path of ssh binary
+ 		if no absoulte path is specified, ssh will
+		be searched with help of PATH env. var.		ssh
+ SFDISKBIN	Path of sfdisk binary 
+ 		if no absoulte path is specified, sfdisk will
+		be searched with help of PATH env. var.		sfdisk
+ PARTITIONFILE	File that will contain the partition table	<empty>
+ SCANDISKS	Disk devices to scan if not all partitions
+ 		should be stored or when sfdisk doesn't find
+		any disk(s), e.g. /dev/sda /dev/sdb		<empty>
+ VERBOSE	How verbose we should be:
+ 		0 = quiet
+ 		1 = status message at program end
+ 		2 = all status messages that do also appear in the logfile
+ 		3 = debug
+ 		4 = maximum debug				0
+
+Server / Provider specific options:
+
+ Parameter	Description					Default Value
+ REMOTEHOST	FQDN of backup host				<none>
+ LOCALDIR	Local directory from where to start backing up	/
+ REMOTEDIR	subdirectory under CURRENTPREFIX 		<empty>
+ CURRENTPREFIX	Path where the backup files are stored
+ 		on the backup host				/incoming/
+ SNAPSHOTPREFIX	Path where the snapshot files can be found
+ 		on the backup host				/.snapshots/
+ REMOTEPERMS	Setting of permissions on backup host		
+ 		Should be on, except remote host doesn't allow	1
+
+Shell variables ($<variable>) may be used.
+Attention: Not all shell variables are available.
+
+=head2 4.2 Inclusion configuration file
+
+The inclusion configuration file (or file list) contains all path(s) to be searched recursively for files to be backed up (in effect used as the --files-from option of rsync call).
+
+The items (directories / files) mentioned here can also contain the following common shell wildcard patterns:
+
+ Pattern	Description				Example
+ *		Matches none, 1 or multiple characters	file*, matches
+ 		in a file or dir name			file1, file.txt, etc.
+ ?		Matches exactly one character except	som?file.txt
+		a slash ("/") 				Matches somefile, not
+							somfile or somebigfile
+ [...]		Matches character ranges/classes	test[1-2], matches test1
+                                                        test2, not test3, test11
+
+Attention: Please be aware of that asterisk (*) and question mark (?) will NOT match hidden files, hence that ones beginning with a dot (e.g. ".bashrc"). So, if you want to include such files, specify those by using a pattern like ".*" or if you want to backup the whole directory anyway, only specify the directory itself, without the asterisk below (sampledir/).
+
+Further, you may also use shell variables ($<variablename>) to simplify configuration for multiple systems or multiple users. Because of that, if a file to include contains such a pattern in its name, you must escape it with a backslash in front of it (e.g. test\$file). Also a backslash "\" that is meant literally must be escaped by a second one. But attention: Not all shell-variables are available, you should verify first. With those, every item matching will be added to the inclusion list. If it is a directory, it and all content below is added to the file list recursively.
+
+It is important to understand that this file is basically a file list, not an include file corresponding to the --include-from option of rsync, paths aren't searched recursively so they must always start from LOCALDIR. Every file contained under the paths or mentioned in this file explicitly may be excluded through exclusion rules defined in the exclusion configuration file.
+
+Consider the path's listed in this file like another starting point, so any exclusion rules that exclude the parent directory won't exclude a directory or file under that path (unless useing double asterisks "**"). Excluding an item under such a path is achieved by an exclusion pattern matching below the path specified in the include (file list) file.
+
+Please be ware, at this time at least, rsync will not delete files on backup host that are not included any more because you have removed an include line or because of a more restrictive include wildcard pattern. You will have to delete those files on the backup server manually to get rid of them.
+
+
+=head2 4.3 Exclusion configuration file
+
+The exclusion configuration file (or exclusion pattern list) allows to flexibly exclude some files or directories and even further don't exclude items that match an exclusion rule. Effectively, this file will be passed to rsync with the --exclusion-file option, and will also be used for creating the permission script, so it should work exactly the same as rsync does. 
+A full description of rsync's exclusion mechanism can be found in the manual page of rsync. Here's a brief summary of the possibilities you have:
+
+ Pattern	Description				Example
+ / at the begin	Matching exactly from the start of the	/foo
+ 		path, equivalent of a leading ^ in
+		regular expressions
+ Ends with /	Only matches a directory, not a file,	foodir/
+ 		link or device
+ *		Matches none, 1 or multiple characters	file*, matches
+ 		in a file or dir name, stops at slashes	file1, file.txt, etc.
+ ?		Matches exactly one character		som?file.txt
+ 		except a slash ("/")			Matches somefile, not
+							somfile or somebigfile
+ [...]		Matches character ranges/classes	test[1-2], matches test1
+                                                        test2, not test3, test11
+ **		Matches none, one or multiple character	te**scripts/ matches
+ 		in a file or directory name, matches	directories testscripts
+		slashes, hence subdirectories like a /	and test/scripts
+ +<space>	The item is considered as an include 	+ test/scripts/ will
+ 		pattern. That means that a similar item	avoid dir test/scripts
+		that is excluded by a later rule will	to be excluded even if
+		not be excluded effectively             scripts excluded below
+ -<space>	Always considered as an exclude pattern	- bar
+ 	 	effectively it's the same like no - sign
+ !		Resets the list of include/excludes by	foo
+ 		removing all previously defined pattern	!
+							bar => excludes only bar
+ * (alone)	Excludes every file and directory from 	*
+ 		root path on, so nothing will be backed
+		up if no lines beginning with "+ " are
+		defined above
+ +<space>*/	Includes all directories, useful before	*
+ 		anything is excluded with a "*"		+ */ => only directory
+							tree will be backed up
+
+B<How the rules work:>
+
+=over
+
+=item *
+
+The first matching occurence of an exclusion (or an include / not exclude) counts against the path.
+
+=item *
+
+The items are relative to the local top directory (LOCALDIR) respective destination top directory (REMOTEDIR), so the LOCALDIR prefix should never been included in an include or exclude path. Only if LOCALDIR is /, the paths are matching absolute paths.
+
+=item *
+
+A pattern in the exclude file not beginning with a "/" is searched recursively, so it can match anywhere in the directory tree, even if it contains two or more path elements (slashes).
+
+=item *
+
+Excluded directories: rsync will not see a directory and all its content anymore if it maches an exclude rule. You cannot use a + -line only for a file below that directory to re-include it, without re-including the parents up to the excluded directory as well, because rsync isn't able to see the file. But with a seperate include line in the include (file list) file, you can restart from a path below the excluded path, and thus include an arbitrary file or directory under an excluded path.
+
+=back
+
+If a filename stated in the EXCLUDE-file should contain a pattern character (*, **, ?, []), you must escape it with a backslash in front of it (e.g. test\*file).
+Also a backslash "/" that is meant literally must be escaped by a second one.
+
+As a difference to the include configuration file, the "$" sign is always meant literally, so no shell variables are possible here, because the exclude lines are passed directly to rsync, without being resolved or globbed. But in opposite to the inclusion file list, you may use an asterisk in place of the home directory name to exclude something in all home directories, for example.
+
+
+=head1 5 Permission script
+
+The permission script will be created to have correct permissions after a restore. There are 2 ways we can get the actual directories/files backed up:
+
+=over
+
+=item *
+
+File list of rsync (option --list-only) - the easy and more reliable way
+
+=item *
+
+Calculating includes/excludes by ourselves - the slower and possibly more buggy way
+
+=back
+
+Unfortunately, the option "--list-only" has been introduced in recent versions, older versions of rsync don't support that, so we have to build the permission list manually with the same calculations as rsync does.
+
+Clearly, this can be only as a best-effort, specially if something changes in the include/exclude calculation rules a newer version of rsync may use. Beside that, those calculations use more time and consume more memory and CPU ressources as done directly by rsync (which does this anyway...)
+
+With the file list option of rsync, we have an exact list of what would be transferred (backed up) by rsync according include/exclude rules, so that would be the better option if possible.
+
+Because of those reasons, it's recommended to use rsync in a version equal as or higher than 2.6.7.
+
+But if you explicitly want to use the built-in mechanism for finding files that will be transferred and not relying upon the rsync mechanism, set variable RSYNCLIST = 0. This can be useful for troubleshooting or if something has changed in the way the filelist is generated by a future version of rsync.
+
+=head1 6 Troubleshooting
+
+=head2 6.1 Cannot authenticate on backup host
+
+No backup is being created, the logfile says something like:
+
+C<Permission denied (publickey).>
+
+C<rsync: connection unexpectedly closed (0 bytes received so far) [sender]>
+
+C<rsync error: unexplained error (code 255) at io.c(453) [sender=2.6.9]>
+
+- Check if private key file denoted with PRIVKEYFILE in configuration file exists and is readable by the user and B<NOT accessible> by B<group or others>
+
+- Make sure you have copied the public key onto the backup host to
+/.ssh/authorized_keys
+
+- Check if username is specified exactly in configuration file by option REMOTEUSER as you recieved from your storage provider
+
+=head2 6.2 Some files could not be written on backup host
+
+Following error message appears in OnlineBackup logfile:
+
+C<mkstemp "/incoming/mikenoti/test/.changedfile.6MjLwh" failed: Permission denied>
+
+-> check if option REMOTEPERMS in configuration file is set to 1 and set it if not (REMOTEPERMS=1)
+
+=head2 6.3 Deleted files cannot be removed on backup host
+
+Following error message appears in OnlineBackup logfile:
+
+C<delete_one: unlink "/incoming/mikenoti/test/minpermdir2/datei8" failed: Permission denied>
+
+-> check if you are using B<rsync> version newer or equal than B<2.6.7>, those versions can adapt permissions to always allow modifying the containing directory. If you have a current enough version, B<run OnlineBackup.pl again>, because the containing directory wasn't accessible last time. B<Upgrade> if you are using an older version if possible or change the permissions of the local containing directory (temporarily) to at least user writable.
+
+=head2 6.4 Permissions aren't restored correctly
+
+Permissions or owner/group are set according the umask or belong to the user that started the restore, not as they originally have been set.
+
+-> Try another way for generating the file list (see chapter 6). If you have set RSYNCLIST to 0 then set RSYNCLIST to 1, if RSYNCLIST is already set to 1, upgrade rsync if you use an older version than 2.6.7.
+
+-> Problems may also occur if filenames with special characters are used and there's a mismatch in the character set rsync and the shell uses on restore. In this case try setting RSYNCLIST=0.
+
+-> If backup is done from another host (outside the system to be backed up), use numeric user and group ids instead of names by setting NUMERICOWNERS to 1
+
+=head2 6.5 Error message beginning with "default_perms_for_dir:" appears
+
+Following error message appears in log file and OnlineBackup exits with an non-zero return status:
+
+C<default_perms_for_dir: sys_acl_get_file(test/testdir/subdira, SMB_ACL_TYPE_DEFAULT): No such file or directory, falling back on umask>
+
+-> check if option REMOTEPERMS in configuration file is set to 1 and set it if not (REMOTEPERMS=1)
+
+=head2 6.6 Error message "Creation of partition file failed!" appears
+
+This error may occur if sfdisk was not found, the partition file may not be written or the partition file is empty, mostly because sfdisk wasn't able to find automatically the disk devices of the system.
+
+-> Check the log file for further information about the cause of this message, and check the partition file that should be created. If it's available but empty, try to use the option SCANDISKS in main configuration file, e.g:
+SCANDISKS=/dev/hda /dev/hdb

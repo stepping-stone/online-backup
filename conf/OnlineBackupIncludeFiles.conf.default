@@ -1,0 +1,34 @@
+##############################################################################
+# OnlineBackupIncludeFiles.conf
+##############################################################################
+# Description:
+#  Directories and files which are to be included in the backup. Add each
+#  directory and file on a new line. 
+#  If you add a directory, the directory, all the subdirectories and files
+#  below will be included into the backup.
+#  The following wildcards can be used:
+#  - asterisk (*), question mark (?) as well as character classes [a-z]
+#  You may also use shell variables
+#  Avoid empty lines and whitespaces!
+##############################################################################
+# It is very important, that you backup the file .SetPermissions.sh which
+# you configured in the file OnlineBackup.conf! This file is needed for the
+# restore procedure!
+##############################################################################
+# $Id
+##############################################################################
+/etc/
+/home/
+/root/
+/usr/local/scripts/
+/var/lib/portage/
+/var/db/
+/var/spool/
+/vservers/*/*/etc/
+/vservers/*/*/home/
+/vservers/*/*/root/
+/vservers/*/*/usr/local/scripts/
+/vservers/*/*/var/db/
+/vservers/*/*/var/lib/portage/
+/vservers/*/*/var/spool/
+/var/lib/OnlineBackup/
