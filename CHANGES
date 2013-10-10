@@ -301,3 +301,22 @@ OnlineRestore.sh:
 
 OLBUtils.pm:
 (no changes)
+
+Version 2.0.3
+-------------
+
+OnlineBackup.pl:
+- Reading the version number form the configuration file and passing it the the write*XML funtions
+
+OnlineRestore.pl:
+(no changes)
+
+OnlineBackup.conf:
+Version number of the backup script is included in the configuration file
+
+OnlineRestore.sh:
+(no changes)
+
+OLBUtils.pm:
+Writing client information to the backupStarted.xml, backupEnded.xml and scheduler.xml files 
+

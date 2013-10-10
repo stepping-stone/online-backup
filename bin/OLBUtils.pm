@@ -23,6 +23,8 @@ require Exporter;
 @ISA       = ('Exporter');
 @EXPORT    = qw(&getRsyncVersion &writeLog &removeSpareSlashes &prepareRsyncRegex &replaceWildcards &isCharClass &findMatch &isEscapedMetachar &replaceVarRefs &readConf &writeStartXML &writeEndXML);
 
+my $OS = $^O;
+
 # This subroutine gets version information of rsync to determine features
 sub getRsyncVersion {
   my ($rsyncbin,$logfile) = @_;
@@ -669,7 +671,7 @@ sub readConf {
 
 sub writeStartXML{
 
-  my ($id,$privkeyfile,$rsyncbin,$remotehost,$remoteuser,$writedir,$startxml,$schedulerxml,$minuteSelected,$hourSelected,$logfile)=@_;
+  my ($id,$privkeyfile,$rsyncbin,$remotehost,$remoteuser,$writedir,$startxml,$schedulerxml,$minuteSelected,$hourSelected,$logfile,$version)=@_;
 
   # command to test whether the .sepiola directory already exists in the
   # ~/incoming/remotedir directory on the backup-server
@@ -687,7 +689,7 @@ sub writeStartXML{
   	if($return_code == 2){
 	  writeLog("Creating $writedir directory","",$logfile);
 	  print "Creating $writedir directory\n" if $::verbose>1;
-	  $cmd="$rsyncbin $remoteuser\@$remotehost -i $privkeyfile 'mkdir -p $writedir'";
+	  $cmd="ssh $remoteuser\@$remotehost -i $privkeyfile 'mkdir -p $writedir'";
 	  system($cmd);
   	}
 	# otherwise log the error
@@ -715,6 +717,11 @@ xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
 xsi:schemaLocation=\"http://xml.stepping-stone.ch/schema/backup_started backup_started.xsd\">
 	<startdate>$date</startdate>
 	<id>$id</id>
+    <client>
+        <identifier>Online Backup Perl Script</identifier>
+        <version>$version</version>
+        <operatingsystem>$OS</operatingsystem>
+    </client>
 </backup_started>";
 
   # Create a safe temporary file
@@ -757,24 +764,29 @@ xsi:schemaLocation=\"http://xml.stepping-stone.ch/schema/backup_started backup_s
 xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
 xsi:schemaLocation=\"http://xml.stepping-stone.ch/schema/online_backup_schedule online_backup_schedule.xsd\">
  
- <custom_online_backup>
-   <minutes>
-     <minute_selected>$minuteSelected</minute_selected>
-   </minutes>
-   <hours>
-     <hour_selected>$hourSelected</hour_selected>
-   </hours>
-   <days_of_month>
-     <every_day_of_month>*</every_day_of_month>
-   </days_of_month>
-   <months>
-     <everymonth>*</everymonth>
-   </months>
-   <days_of_week>
-     <every_day_of_week>*</every_day_of_week>
-   </days_of_week>
-   <timezone>$timezone</timezone>
- </custom_online_backup>
+  <custom_online_backup>
+    <minutes>
+      <minute_selected>$minuteSelected</minute_selected>
+    </minutes>
+    <hours>
+      <hour_selected>$hourSelected</hour_selected>
+    </hours>
+    <days_of_month>
+      <every_day_of_month>*</every_day_of_month>
+    </days_of_month>
+    <months>
+      <everymonth>*</everymonth>
+    </months>
+    <days_of_week>
+      <every_day_of_week>*</every_day_of_week>
+    </days_of_week>
+    <timezone>$timezone</timezone>
+    <client>
+      <identifier>Online Backup Perl Script</identifier>
+      <version>$version</version>
+      <operatingsystem>$OS</operatingsystem>
+    </client>
+  </custom_online_backup>
  
 </online_backup_schedule>";
 
@@ -808,7 +820,7 @@ xsi:schemaLocation=\"http://xml.stepping-stone.ch/schema/online_backup_schedule 
 
 sub writeEndXML{
 
-  my ($id,$privkeyfile,$rsyncbin,$remotehost,$remoteuser,$writedir,$endxml,$error,$logfile)=@_;
+  my ($id,$privkeyfile,$rsyncbin,$remotehost,$remoteuser,$writedir,$endxml,$error,$logfile,$version)=@_;
 
   # now we can write the backupStared.xml file to this directory
   writeLog("Writting $endxml","",$logfile);
@@ -827,16 +839,21 @@ sub writeEndXML{
   else{
 	$success=0;
   }
-
+  
   # generate the XML string which is then written to the file.
   my $XMLString="<?xml version=\"1.0\"?>
- 
+
 <backup_ended
 xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
 xsi:schemaLocation=\"http://xml.stepping-stone.ch/schema/backup_ended backup_ended.xsd\">
 	<enddate>$date</enddate>
 	<id>$id</id>
 	<success>$success</success>
+    <client>
+        <identifier>Online Backup Perl Script</identifier>
+        <version>$version</version>
+        <operatingsystem>$OS</operatingsystem>
+    </client>
 </backup_ended>";
 
 

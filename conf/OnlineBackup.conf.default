@@ -54,3 +54,4 @@ SEPIOLADIR=/.sepiola_backup
 STARTXML=backupStarted.xml
 ENDXML=backupEnded.xml
 SCHEDULERXML=scheduler.xml
+VERSION=2.0.2
