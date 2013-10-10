@@ -45,6 +45,9 @@ push (@INC, $basedir);
 # import utility subs
 require OLBUtils;
 
+# Version
+use constant VERSION => "2.0.3_pre";
+
 # setting default values
 my $configfile = "../conf/OnlineBackup.conf";
 my $logfile = "../log/OnlineBackup.log";
@@ -363,7 +366,7 @@ my $xmldir=OLBUtils::removeSpareSlashes("$currentprefix/$remotedir/$sepioladir/"
 
 # create the xml directory if it does not already exist and write
 # the 'backupStarted.xml' file to this directory
-OLBUtils::writeStartXML($id,$privkeyfile,$rsyncbin,$remotehost,$remoteuser,$xmldir,$startxml,$schedulerxml,$minuteSelected,$hourSelected,$logfile,$config{VERSION});
+OLBUtils::writeStartXML($id,$privkeyfile,$rsyncbin,$remotehost,$remoteuser,$xmldir,$startxml,$schedulerxml,$minuteSelected,$hourSelected,$logfile,VERSION);
 
 # the prefix used for localdir shouldn't contain trailing slashes
 my $localdirprefix = $localdir;
@@ -1000,7 +1003,7 @@ sub terminate {
   }
 
   # write the endxml to the xml directory. 
-  OLBUtils::writeEndXML($id,$privkeyfile,$rsyncbin,$remotehost,$remoteuser,$xmldir,$endxml,$error,$logfile,$config{VERSION});
+  OLBUtils::writeEndXML($id,$privkeyfile,$rsyncbin,$remotehost,$remoteuser,$xmldir,$endxml,$error,$logfile,VERSION);
 
   # check cause of termination
   if ($error < 0) {
