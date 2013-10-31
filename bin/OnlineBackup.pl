@@ -46,7 +46,7 @@ push (@INC, $basedir);
 require OLBUtils;
 
 # Version
-use constant VERSION => "2.0.4";
+use constant VERSION => "2.0.5_pre";
 
 # setting default values
 my $configfile = "../conf/OnlineBackup.conf";
