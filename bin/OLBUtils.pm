@@ -781,12 +781,12 @@ xsi:schemaLocation=\"http://xml.stepping-stone.ch/schema/online_backup_schedule 
       <every_day_of_week>*</every_day_of_week>
     </days_of_week>
     <timezone>$timezone</timezone>
-    <client>
-      <identifier>Online Backup Perl Script</identifier>
-      <version>$version</version>
-      <operatingsystem>$OS</operatingsystem>
-    </client>
   </custom_online_backup>
+  <client>
+    <identifier>Online Backup Perl Script</identifier>
+    <version>$version</version>
+    <operatingsystem>$OS</operatingsystem>
+  </client>
  
 </online_backup_schedule>";
 
