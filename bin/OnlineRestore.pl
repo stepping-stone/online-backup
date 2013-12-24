@@ -270,7 +270,7 @@ if ($restorepath ne "/") {
 }
 
 # get rsync version to determine if file list from rsync can be used
-my @rsyncversions = OLBUtils::getRsyncVersion ($rsyncbin, $logfile);
+@rsyncversions = OLBUtils::getRsyncVersion ($rsyncbin, $logfile);
 if ( (($rsyncversions[0] == 2) && ($rsyncversions[1] == 6) && ($rsyncversions[2] >= 7)) || (($rsyncversions[0] == 2) && ($rsyncversions[1] > 6)) || ($rsyncversions[0] > 2) ) {
   # conditions allow to use rsync file list...
   $listonly=1;
@@ -374,7 +374,7 @@ if ($restorepath ne "/") {
       if ($item =~ /^(.+)\s->\s(.+)$/) {
         if (-l $destination . "/" . $1) {
           # symlink, only get link itself (not the target)
-          $item =~ s/^(.+)\s->\s(.+)$/\1/g;
+          $item =~ s/^(.+)\s->\s(.+)$/$1/g;
         }
       }
       # add the file/directory to the permissions file list
@@ -736,8 +736,8 @@ sub buildIncrTree {
   # loop through all path parts
   for (my $i=0;$i<@arrbasepath;$i++) {
     # skip empty path part
-    next if (@arrbasepath[$i] eq "");
-    $basepath = $basepath . "/" . @arrbasepath[$i]; 
+    next if ($arrbasepath[$i] eq "");
+    $basepath = $basepath . "/" . $arrbasepath[$i]; 
     if ( OLBUtils::isCharClass($basepath,$lastclass) && ($i < $#arrbasepath) ) {
       # a slash within a character class is not any more a path delimiter, so note that the last part ends with an open character class (if not the last part)
       $lastclass = 1;

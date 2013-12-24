@@ -47,7 +47,7 @@ sub getRsyncVersion {
     return (-1, $errormsg);
   }
   # grab version and protocol information
-  $rsyncversion =~ s/^rsync.*version (\d+)\.(\d+)\.(\d+).*protocol version (\d+).*$/\1,\2,\3,\4/s;
+  $rsyncversion =~ s/^rsync.*version (\d+)\.(\d+)\.(\d+).*protocol version (\d+).*$/$1,$2,$3,$4/s;
   @rsyncversions = split (/,/,$rsyncversion);
   return @rsyncversions;
 }

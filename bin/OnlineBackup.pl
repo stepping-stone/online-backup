@@ -351,7 +351,7 @@ if (-e $lockfile) {
 }
 
 # write lock file
-$timestamp = sprintf("%04d%02d%02d%02d%02d%02d%01d", @currenttime[5]+1900,@currenttime[4]+1,@currenttime[3],@currenttime[2],@currenttime[1],@currenttime[0],@currenttime[8]);
+$timestamp = sprintf("%04d%02d%02d%02d%02d%02d%01d", $currenttime[5]+1900,$currenttime[4]+1,$currenttime[3],$currenttime[2],$currenttime[1],$currenttime[0],$currenttime[8]);
 $currentpid = $$;
 open (FH,">",$lockfile) or terminate (-1,"open $lockfile: $!");
 print (FH $timestamp . " " . $currentpid);
@@ -418,7 +418,7 @@ open (FH, '+>', OLBUtils::removeSpareSlashes($localdirprefix . "/" . $permscript
 close (FH);
 
 # read includes
-my $line = "";
+$line = "";
 $message = "Searching for files";
 OLBUtils::writeLog ($message,"",$logfile);
 print (STDOUT "$message\n") if ($verbose > 1);
@@ -540,7 +540,7 @@ fi
 ';
 
 # check rsync version to determine if file list from rsync can be used
-my @rsyncversions = OLBUtils::getRsyncVersion ($rsyncbin,$logfile);
+@rsyncversions = OLBUtils::getRsyncVersion ($rsyncbin,$logfile);
 if ( (($rsyncversions[0] == 2) && ($rsyncversions[1] == 6) && ($rsyncversions[2] >= 7)) || (($rsyncversions[0] == 2) && ($rsyncversions[1] > 6)) || ($rsyncversions[0] > 2) ) {
   # conditions allow to use rsync file list...
   $listonly=1;
@@ -733,15 +733,15 @@ sub buildFilelistFromRsync {
     # extract path and filename out of each item listed by rsync
     if ($item =~ /^l.{9}\s+(?>.+?\s+.+?\s+.+?\s+)(.+)\s->\s(.+)$/) {
       # symlink, only get link itself (not the target)
-      $item =~ s/^l.{9}\s+(?>.+?\s+.+?\s+.+?\s+)(.+)\s->\s(.+)\n$/\1/g;
+      $item =~ s/^l.{9}\s+(?>.+?\s+.+?\s+.+?\s+)(.+)\s->\s(.+)\n$/$1/g;
     } elsif ($item =~ /^(?>(?!s)[^\s]{10}\s+.+?\s+.+?\s+.+?\s+)(.+)$/) {
       # not a symlink and not a socket file, get path and filename
       if ($item =~ /^d/) {
         # item is a directory, add a slash at end of path
-        $item =~ s/^(?>[^\s]{10}\s+.+?\s+.+?\s+.+?\s+)(.+)\n$/\1\//g;
+        $item =~ s/^(?>[^\s]{10}\s+.+?\s+.+?\s+.+?\s+)(.+)\n$/$1\//g;
       } else {
         # item is a regular file, without slash at end of path
-        $item =~ s/^(?>[^\s]{10}\s+.+?\s+.+?\s+.+?\s+)(.+)\n$/\1/g;
+        $item =~ s/^(?>[^\s]{10}\s+.+?\s+.+?\s+.+?\s+)(.+)\n$/$1/g;
       }
     } else {
       # skip socket files
