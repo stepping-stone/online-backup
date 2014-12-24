@@ -31,4 +31,6 @@
 /vservers/*/*/var/db/
 /vservers/*/*/var/lib/portage/
 /vservers/*/*/var/spool/
+/vservers/*/*/var/log/
 /var/lib/OnlineBackup/
+/var/log/
