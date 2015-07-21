@@ -91,6 +91,8 @@ my $remoteuser;
 my $privkeyfile;
 my $includefile;
 my $excludefile;
+my $prehookscriptdir;
+my $posthookscriptdir;
 my $permscript;
 my $message;
 my $regexerror;
@@ -206,6 +208,19 @@ if ($config{EXCLUDEFILE}) {
 } else {
   terminate (-1,"Variable EXCLUDEFILE must be set in configuration file!\n       For example: EXCLUDEFILE=\$HOME/OnlineBackup/OnlineBackupExcludeFiles.conf");
 }
+
+if ($config{PREHOOKSCRIPTDIR}) {
+  $prehookscriptdir = $config{PREHOOKSCRIPTDIR};
+} else {
+  terminate (-1,"Variable PREHOOKSCRIPTDIR must be set in configuration file!\n     For example: PREHOOKSCRIPTDIR=\$HOME/OnlineBackup/libexec/pre-hooks.d");
+}
+
+if ($config{POSTHOOKSCRIPTDIR}) {
+  $prehookscriptdir = $config{POSTHOOKSCRIPTDIR};
+} else {
+  terminate (-1,"Variable POSTHOOKSCRIPTDIR must be set in configuration file!\n     For example: POSTHOOKSCRIPTDIR=\$HOME/OnlineBackup/libexec/post-hooks.d");
+}
+
 
 if ($config{TEMPDIR}) {
   $tempdir = $config{TEMPDIR};
