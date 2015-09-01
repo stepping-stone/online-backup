@@ -43,7 +43,7 @@ REMOTEHOST=194.176.109.215
 LOCALDIR=/
 REMOTEDIR=<YOUR-HOST-NAME>
 CURRENTPREFIX=~/incoming/
-SNAPSHOTPREFIX=/.snapshots/
+SNAPSHOTPREFIX=~/.snapshots/
 #REMOTEPERMS=1
 
 ##############################################################################
