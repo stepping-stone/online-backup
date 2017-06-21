@@ -25,9 +25,9 @@ mkdir -p %{buildroot}%{_defaultdocdir}/%{name}-%{version}/
 
 install -m 755 bin/*.pl %{buildroot}%{_bindir}/
 install -m 755 bin/*.sh %{buildroot}%{_bindir}/
-install -m 755 bin/*.pm %{buildroot}%{perl_vendorlib}/
-install -m 755 conf/*   %{buildroot}%{_sysconfdir}/OnlineBackup/
-install -m 755 doc/*    %{buildroot}%{_defaultdocdir}/%{name}-%{version}/
+install -m 644 bin/*.pm %{buildroot}%{perl_vendorlib}/
+install -m 644 conf/*   %{buildroot}%{_sysconfdir}/OnlineBackup/
+install -m 644 doc/*    %{buildroot}%{_defaultdocdir}/%{name}-%{version}/
 
 %files
 %{_bindir}/OnlineBackup.pl
