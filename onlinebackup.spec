@@ -13,21 +13,21 @@ Source0: https://github.com/stepping-stone/online-backup/archive/v%{version}.tar
 This is the stepping stone GmbH online-backup utility.
 
 %prep
-%setup -n %{name}-%{version}
+%setup -n online-backup-%{version}
 
 %build
 
 %install
-mkdir -p %{buildroot}/%{_bindir}/
-mkdir -p %{buildroot}/%{perl_vendorlib}/
-mkdir -p %{buildroot}/%{_sysconfdir}/OnlineBackup/ 
-mkdir -p %{_defaultdocdir}/%{%{name}-%{version}/
+mkdir -p %{buildroot}%{_bindir}/
+mkdir -p %{buildroot}%{perl_vendorlib}/
+mkdir -p %{buildroot}%{_sysconfdir}/OnlineBackup/
+mkdir -p %{buildroot}%{_defaultdocdir}/%{name}-%{version}/
 
-install -m 755 bin/*.pl %{buildroot}/%{_bindir}/
-install -m 755 bin*.sh  %{buildroot}/%{_bindir}/
-install -m 755 bin/*.pm %{buildroot}/%{perl_vendorlib}/
-install -m 755 conf/*   %{buildroot}/%{_sysconfdir}/OnlineBackup/
-install -m 755 doc/*    %{_defaultdocdir}/%{%{name}-%{version}/
+install -m 755 bin/*.pl %{buildroot}%{_bindir}/
+install -m 755 bin/*.sh %{buildroot}%{_bindir}/
+install -m 755 bin/*.pm %{buildroot}%{perl_vendorlib}/
+install -m 755 conf/*   %{buildroot}%{_sysconfdir}/OnlineBackup/
+install -m 755 doc/*    %{buildroot}%{_defaultdocdir}/%{name}-%{version}/
 
 %files
 %{_bindir}/OnlineBackup.pl
@@ -36,8 +36,8 @@ install -m 755 doc/*    %{_defaultdocdir}/%{%{name}-%{version}/
 %{perl_vendorlib}/OLBUtils.pm
 %{_sysconfdir}/OnlineBackup/
 %config(noreplace) %{_sysconfdir}/OnlineBackup/*
-%config(noreplace) %{_defaultdocdir}/%{%{name}-%{version}/
-%{_defaultdocdir}/%{%{name}-%{version}/*
+%config(noreplace) %{_defaultdocdir}/%{name}-%{version}/
+%{_defaultdocdir}/%{name}-%{version}/*
 
 %clean
 rm -rf %{buildroot}
