@@ -34,10 +34,8 @@ install -m 644 doc/*    %{buildroot}%{_defaultdocdir}/%{name}-%{version}/
 %{_bindir}/OnlineRestore.pl
 %{_bindir}/OnlineRestore.sh
 %{perl_vendorlib}/OLBUtils.pm
-%{_sysconfdir}/OnlineBackup/
-%config(noreplace) %{_sysconfdir}/OnlineBackup/*
+%config(noreplace) %{_sysconfdir}/OnlineBackup/
 %config(noreplace) %{_defaultdocdir}/%{name}-%{version}/
-%{_defaultdocdir}/%{name}-%{version}/*
 
 %clean
 rm -rf %{buildroot}
