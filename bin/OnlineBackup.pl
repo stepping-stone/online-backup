@@ -641,7 +641,7 @@ chmod (0700, OLBUtils::removeSpareSlashes($localdirprefix . "/" . $permscript));
 $message = "Transferring files to backup host";
 OLBUtils::writeLog ($message,"",$logfile);
 print (STDOUT "$message\n") if ($verbose > 1);
-my $cmd = "\"$rsyncbin\" --exclude-from=\"$excludefile\" --delete -rlHtvze \"$sshbin -i $privkeyfile\"$chmodoption$remotepermoption$deleteexcludedoption --files-from=- \"$localdir\" $remoteuser\@$remotehost:" . OLBUtils::removeSpareSlashes($currentprefix . "/" . $remotedir) . "/";
+my $cmd = "\"$rsyncbin\" --exclude-from=\"$excludefile\" --delete -rSlHtvze \"$sshbin -i $privkeyfile\"$chmodoption$remotepermoption$deleteexcludedoption --files-from=- \"$localdir\" $remoteuser\@$remotehost:" . OLBUtils::removeSpareSlashes($currentprefix . "/" . $remotedir) . "/";
 print "rsync call: " . $cmd . "\n" if ($verbose > 2);
 open (INPUT, "| $cmd 1>>\"$logfile\" 2>&1");
 foreach $includestring (@includes) {
