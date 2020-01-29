@@ -31,6 +31,7 @@
 # 2011-08-16 pat.klaey@stepping-stone.ch V 1.14 - call writeStartXML and writeEndXML at the start / at the end of the backup process.
 # 2011-09-13 pat.klaey@stepping-stone.ch V 2.0 - Read minuteSelected and hourSelected from config file and pass it to writeStartXML
 # 2012-09-10 pat.klaey@stepping-stone.ch V 2.0.1 - If during rsync process some files vanish, it is no longer treated as an error
+# 2020-01-29 sst-yde V 2.0.6 - Add CREATEPERMSCRIPT option.
 ################################################################################
 
 use Sys::Hostname;
@@ -63,6 +64,7 @@ my $sshbin = "ssh";
 my $sfdiskbin = "sfdisk";
 my $rsynclist = 1;
 my $remoteperms = 1;
+my $createpermscript = 1;
 my $numericowners = 0;
 my $deleteexcluded = 1;
 my $partitionfile = "";
@@ -229,6 +231,10 @@ if ($config{SFDISKBIN}) {
 
 if ($config{REMOTEPERMS} =~ /^[0-1]$/) {
   $remoteperms = $config{REMOTEPERMS};
+}
+
+if ($config{CREATEPERMSCRIPT} =~ /^[0-1]$/) {
+  $createpermscript = $config{CREATEPERMSCRIPT};
 }
 
 if ($config{NUMERICOWNERS} =~ /^[0-1]$/) {
@@ -524,118 +530,123 @@ print join("\n",@excludes) if ($verbose > 2);
 print "\n\n" if ($verbose > 2);
 close (FH);
 
-# write the header of permission script
-open (FH, '+>', OLBUtils::removeSpareSlashes($localdirprefix . "/" . $permscript)) or terminate (-1,"Cannot open permission script " . OLBUtils::removeSpareSlashes($localdirprefix . "/" . $permscript));
-print FH '#! /bin/sh
-# This shell script sets the permissions back to those found in source directory
-# Please don\'t modify or delete it, it will be used by the restore script!
-
-if [ "$1" != "" ]
-then
-  PREFIX="$1"
-else
-  PREFIX=""
-fi
-
-';
-
-# check rsync version to determine if file list from rsync can be used
-@rsyncversions = OLBUtils::getRsyncVersion ($rsyncbin,$logfile);
-if ( (($rsyncversions[0] == 2) && ($rsyncversions[1] == 6) && ($rsyncversions[2] >= 7)) || (($rsyncversions[0] == 2) && ($rsyncversions[1] > 6)) || ($rsyncversions[0] > 2) ) {
-  # conditions allow to use rsync file list...
-  $listonly=1;
-  # ...and quoting filenames in remote shell command
-  $sshbin = "\'$sshbin\'";
-  $privkeyfile = "\'$privkeyfile\'";
-}
-
-if ( ($listonly == 1) && (-w $tempdir) && ($rsynclist == 1) ) {
-  # build file list for setting permissions by using file list from rsync
-  @permlist = buildFilelistFromRsync($temp_filelist,$excludefile,$rsyncbin,$sshbin,$privkeyfile,$localdir,$logfile,$verbose,@includes);
-} else {
-  # build file list for setting permissions by using rules like rsync
-  if ($rsynclist == 0) {
-    $message = "Calculating includes/excludes by myself because option RSYNCLIST is turned off"; 
-  } elsif ($listonly == 0) {
-    $message = "Calculating includes/excludes by myself because available rsync version doesn't provide a suitable file list";
-  } elsif (! -w $tempdir) {
-    $message = "Calculating includes/excludes by myself because lack of a writable temporary directory. Please check config option TEMPDIR for an existing writable path!";
+if ($createpermscript == 1) {
+  # write the header of permission script
+  open (FH, '+>', OLBUtils::removeSpareSlashes($localdirprefix . "/" . $permscript)) or terminate (-1,"Cannot open permission script " . OLBUtils::removeSpareSlashes($localdirprefix . "/" . $permscript));
+  print FH '#! /bin/sh
+  # This shell script sets the permissions back to those found in source directory
+  # Please don\'t modify or delete it, it will be used by the restore script!
+  
+  if [ "$1" != "" ]
+  then
+    PREFIX="$1"
+  else
+    PREFIX=""
+  fi
+  
+  ';
+  
+  # check rsync version to determine if file list from rsync can be used
+  @rsyncversions = OLBUtils::getRsyncVersion ($rsyncbin,$logfile);
+  if ( (($rsyncversions[0] == 2) && ($rsyncversions[1] == 6) && ($rsyncversions[2] >= 7)) || (($rsyncversions[0] == 2) && ($rsyncversions[1] > 6)) || ($rsyncversions[0] > 2) ) {
+    # conditions allow to use rsync file list...
+    $listonly=1;
+    # ...and quoting filenames in remote shell command
+    $sshbin = "\'$sshbin\'";
+    $privkeyfile = "\'$privkeyfile\'";
   }
-  OLBUtils::writeLog($message,"",$logfile);
-  @permlist = buildFilelistFromRules($rsyncbin,$logfile,\@includes,\@excludes);
-}
-
-
-# write commands to permission script
-print "\nResulting list of entries to be used:\n" if ($verbose > 2);
-foreach $filename (@permlist) {
-  # remove leading slash from file name
-  $filename =~ s:^/::;
-  print "./$filename\n" if ($verbose > 2);
-  my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks);
-  my ($user,$group);
-  if ( -l $localdirprefix . "/" . $filename ) {
-    # for a link we have to use lstat, and only setting ownership
-    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = lstat($localdirprefix . "/" . $filename);
-    if ( $numericowners == 0 ) {
-      # use user and group name
-      $user=&fmt_uid($uid);
-      $group=&fmt_gid($gid);
-    } else {
-      # use numeric user and group id
-      $user=$uid;
-      $group=$gid;
+  
+  if ( ($listonly == 1) && (-w $tempdir) && ($rsynclist == 1) ) {
+    # build file list for setting permissions by using file list from rsync
+    @permlist = buildFilelistFromRsync($temp_filelist,$excludefile,$rsyncbin,$sshbin,$privkeyfile,$localdir,$logfile,$verbose,@includes);
+  } else {
+    # build file list for setting permissions by using rules like rsync
+    if ($rsynclist == 0) {
+      $message = "Calculating includes/excludes by myself because option RSYNCLIST is turned off"; 
+    } elsif ($listonly == 0) {
+      $message = "Calculating includes/excludes by myself because available rsync version doesn't provide a suitable file list";
+    } elsif (! -w $tempdir) {
+      $message = "Calculating includes/excludes by myself because lack of a writable temporary directory. Please check config option TEMPDIR for an existing writable path!";
     }
-  # replace single quote in a file name with backslash-escaped single quote
-  $filename =~ s:':'\\'':g;
-  printf (FH "chown -h %s:%s \"\${PREFIX}\"'/%s'\n",$user,$group,$filename);
-  } elsif ( -e $localdirprefix . "/" . $filename ) {
-    # for all other types of files we need stat
-    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = stat($localdirprefix . "/" . $filename);
-    if ( $numericowners == 0 ) {
-      # use user and group name
-      $user=&fmt_uid($uid);
-      $group=&fmt_gid($gid);
-    } else {
-      # use numeric user and group id
-      $user=$uid;
-      $group=$gid;
-    }
-    # recreate special files
-    if ( (-b $localdirprefix . "/" . $filename) || (-c $localdirprefix . "/" . $filename) ) {
-      my ($major, $minor) = ($rdev >> 8, $rdev & 0xFF);
-      my $devtype;
-      # set device type according to type of file
-      if (-b $localdirprefix . "/" . $filename) {
-	# block device
-        $devtype = "b";
-      } elsif (-c $localdirprefix . "/" . $filename) {
-        # character device
-        $devtype = "c";
+    OLBUtils::writeLog($message,"",$logfile);
+    @permlist = buildFilelistFromRules($rsyncbin,$logfile,\@includes,\@excludes);
+  }
+
+  # write commands to permission script
+  print "\nResulting list of entries to be used:\n" if ($verbose > 2);
+  foreach $filename (@permlist) {
+    # remove leading slash from file name
+    $filename =~ s:^/::;
+    print "./$filename\n" if ($verbose > 2);
+    my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks);
+    my ($user,$group);
+    if ( -l $localdirprefix . "/" . $filename ) {
+      # for a link we have to use lstat, and only setting ownership
+      ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = lstat($localdirprefix . "/" . $filename);
+      if ( $numericowners == 0 ) {
+        # use user and group name
+        $user=&fmt_uid($uid);
+        $group=&fmt_gid($gid);
+      } else {
+        # use numeric user and group id
+        $user=$uid;
+        $group=$gid;
       }
-      print ("Device file: " . $filename . ", Type: " . $devtype . ", Major: " . $major . ", Minor: " . $minor . "\n") if ($verbose > 3);
-      $filename =~ s:':'\\'':g;
-      printf (FH "mknod \"\${PREFIX}\"'/%s' %s %s %s\n", $filename, $devtype, $major, $minor); 
-    } elsif (-p $localdirprefix . "/" . $filename) {
-      # named pipe
-      my $devtype = "p";
-      print ("Special file: " . $filename . ", Type: " . $devtype . "\n") if ($verbose > 3);
-      $filename =~ s:':'\\'':g;
-      printf (FH "mknod \"\${PREFIX}\"'/%s' %s\n", $filename, $devtype); 
-    } else {
-      # other file type
-      $filename =~ s:':'\\'':g;
+    # replace single quote in a file name with backslash-escaped single quote
+    $filename =~ s:':'\\'':g;
+    printf (FH "chown -h %s:%s \"\${PREFIX}\"'/%s'\n",$user,$group,$filename);
+    } elsif ( -e $localdirprefix . "/" . $filename ) {
+      # for all other types of files we need stat
+      ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = stat($localdirprefix . "/" . $filename);
+      if ( $numericowners == 0 ) {
+        # use user and group name
+        $user=&fmt_uid($uid);
+        $group=&fmt_gid($gid);
+      } else {
+        # use numeric user and group id
+        $user=$uid;
+        $group=$gid;
+      }
+      # recreate special files
+      if ( (-b $localdirprefix . "/" . $filename) || (-c $localdirprefix . "/" . $filename) ) {
+        my ($major, $minor) = ($rdev >> 8, $rdev & 0xFF);
+        my $devtype;
+        # set device type according to type of file
+        if (-b $localdirprefix . "/" . $filename) {
+  	# block device
+          $devtype = "b";
+        } elsif (-c $localdirprefix . "/" . $filename) {
+          # character device
+          $devtype = "c";
+        }
+        print ("Device file: " . $filename . ", Type: " . $devtype . ", Major: " . $major . ", Minor: " . $minor . "\n") if ($verbose > 3);
+        $filename =~ s:':'\\'':g;
+        printf (FH "mknod \"\${PREFIX}\"'/%s' %s %s %s\n", $filename, $devtype, $major, $minor); 
+      } elsif (-p $localdirprefix . "/" . $filename) {
+        # named pipe
+        my $devtype = "p";
+        print ("Special file: " . $filename . ", Type: " . $devtype . "\n") if ($verbose > 3);
+        $filename =~ s:':'\\'':g;
+        printf (FH "mknod \"\${PREFIX}\"'/%s' %s\n", $filename, $devtype); 
+      } else {
+        # other file type
+        $filename =~ s:':'\\'':g;
+      }
+ 
+      # setting ownership and permissions
+      printf (FH "chown %s:%s \"\${PREFIX}\"'/%s'; chmod %04o \"\${PREFIX}\"'/%s'\n",$user,$group,$filename,$mode & 07777,$filename);
     }
-        
-    # setting ownership and permissions
-    printf (FH "chown %s:%s \"\${PREFIX}\"'/%s'; chmod %04o \"\${PREFIX}\"'/%s'\n",$user,$group,$filename,$mode & 07777,$filename);
   }
-}
 
-# end of permission script
-print "\n\n" if ($verbose > 2);
-close (FH);
-chmod (0700, OLBUtils::removeSpareSlashes($localdirprefix . "/" . $permscript));
+  # end of permission script
+  print "\n\n" if ($verbose > 2);
+  close (FH);
+  chmod (0700, OLBUtils::removeSpareSlashes($localdirprefix . "/" . $permscript));
+} else {
+  $message = "Skipping creation of permission script because CREATEPERMSCRIPT is set to 0";
+  OLBUtils::writeLog($message,"",$logfile);
+  print (STDOUT "$message\n") if ($verbose > 1);
+}
 
 # Call rsync to transfer the files to the backup server
 $message = "Transferring files to backup host";

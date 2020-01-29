@@ -27,6 +27,7 @@ NUMERICOWNERS=1
 DELETEEXCLUDED=0
 SFDISKBIN=/sbin/sfdisk
 SCANDISKS=/dev/sda
+CREATEPERMSCRIPT=1
 
 ##############################################################################
 # Backup scheduling
