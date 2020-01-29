@@ -320,3 +320,20 @@ OnlineRestore.sh:
 OLBUtils.pm:
 Writing client information to the backupStarted.xml, backupEnded.xml and scheduler.xml files 
 
+Version 2.0.6
+-------------
+
+OnlineBackup.pl:
+- Add CREATEPERMSCRIPT option.
+
+OnlineRestore.pl:
+(no changes)
+
+OnlineBackup.conf:
+(no changes)
+
+OnlineRestore.sh:
+(no changes)
+
+OLBUtils.pm:
+(no changes)
