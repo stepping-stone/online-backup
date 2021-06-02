@@ -1,0 +1,8 @@
+/var/log/OnlineBackup.log {
+    daily
+    rotate 7
+    compress
+    missingok
+    notifempty
+}
+

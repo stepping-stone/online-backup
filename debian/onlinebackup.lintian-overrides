@@ -1,0 +1,11 @@
+
+script-with-language-extension usr/bin/OnlineBackup.pl
+script-with-language-extension usr/bin/OnlineRestore.pl
+script-with-language-extension usr/bin/OnlineRestore.sh
+no-manual-page usr/bin/OnlineRestore.pl
+no-manual-page usr/bin/OnlineRestore.sh
+no-manual-page usr/bin/OnlineBackup.pl
+
+initial-upload-closes-no-bugs
+
+possible-documentation-but-no-doc-base-registration
