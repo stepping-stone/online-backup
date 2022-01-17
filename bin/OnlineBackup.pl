@@ -32,6 +32,7 @@
 # 2011-09-13 pat.klaey@stepping-stone.ch V 2.0 - Read minuteSelected and hourSelected from config file and pass it to writeStartXML
 # 2012-09-10 pat.klaey@stepping-stone.ch V 2.0.1 - If during rsync process some files vanish, it is no longer treated as an error
 # 2020-01-29 sst-yde V 2.0.6 - Add CREATEPERMSCRIPT option.
+# 2021-01-17 sst-yde V 2.0.7 - Add LEGACY option.
 ################################################################################
 
 use Sys::Hostname;
@@ -76,6 +77,7 @@ my $schedulerxml="scheduler.xml";
 my $minuteSelected;
 my $hourSelected;
 our $verbose = 0;
+my $legacy = 0;
 
 # declare variables
 my %config;
@@ -281,6 +283,9 @@ if ($config{SCHEDULEDHOUR}) {
   terminate (-1,"Variable SCHEDULEDHOUR must be set in configuration file!\n       For example: SCHEDULEDHOUR=05 or SCHEDULEDMINUTE=16");
 }
 
+if ($config{LEGACY} =~ /^[0-1]$/) {
+  $legacy = $config{LEGACY};
+}
 
 my $temp_filelist=OLBUtils::removeSpareSlashes($tempdir . "/.filelist.tmp");
 
@@ -652,7 +657,24 @@ if ($createpermscript == 1) {
 $message = "Transferring files to backup host";
 OLBUtils::writeLog ($message,"",$logfile);
 print (STDOUT "$message\n") if ($verbose > 1);
-my $cmd = "\"$rsyncbin\" --exclude-from=\"$excludefile\" --delete -rSlHtvze \"$sshbin -i $privkeyfile\"$chmodoption$remotepermoption$deleteexcludedoption --files-from=- \"$localdir\" $remoteuser\@$remotehost:" . OLBUtils::removeSpareSlashes($currentprefix . "/" . $remotedir) . "/";
+my $cmd;
+
+if ($legacy == 1) {
+  $cmd = "\"$rsyncbin\" --exclude-from=\"$excludefile\" --delete -rSlHtvze \"$sshbin -i $privkeyfile\"$chmodoption$remotepermoption$deleteexcludedoption --files-from=- \"$localdir\" $remoteuser\@$remotehost:" . OLBUtils::removeSpareSlashes($currentprefix . "/" . $remotedir) . "/";
+} else {
+  my $backupdir = '~/.snapshots/' . strftime '%Y%m%d', localtime;
+  $cmd = "'$rsyncbin'"
+       . " --rsh '$sshbin -i $privkeyfile'"
+       . ' --recursive --sparse --links --hard-links --times --verbose --compress' # Expanded version of the options "-rSlHtvz".
+       . ' --delete'
+       . ' --backup'
+       . " --backup-dir '$backupdir'"
+       . " --files-from '$includefile'"
+       . " --exclude-from '$excludefile'"
+       . " '$localdir'"
+       . " '$remoteuser\@$remotehost':" . OLBUtils::removeSpareSlashes("$currentprefix/$remotedir") . "/";
+}
+
 print "rsync call: " . $cmd . "\n" if ($verbose > 2);
 open (INPUT, "| $cmd 1>>\"$logfile\" 2>&1");
 foreach $includestring (@includes) {
