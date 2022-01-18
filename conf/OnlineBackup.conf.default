@@ -6,7 +6,7 @@
 ##############################################################################
 # Customer Section
 ##############################################################################
-# 
+#
 ##############################################################################
 VERBOSE=2
 # Please add your username to the following line in the form of:
@@ -27,7 +27,7 @@ NUMERICOWNERS=1
 DELETEEXCLUDED=0
 SFDISKBIN=/sbin/sfdisk
 SCANDISKS=/dev/sda
-CREATEPERMSCRIPT=1
+CREATEPERMSCRIPT=0
 
 ##############################################################################
 # Backup scheduling
@@ -40,7 +40,7 @@ SCHEDULEDMINUTE=00
 # Server / Provider specific options
 ##############################################################################
 # Please do not modify these values if you don't know what you are doing.
-REMOTEHOST=backup.stoney-backup.com
+REMOTEHOST=backup-02.stoney-backup.com
 LOCALDIR=/
 REMOTEDIR=<YOUR-HOST-NAME>
 CURRENTPREFIX=~/incoming/
