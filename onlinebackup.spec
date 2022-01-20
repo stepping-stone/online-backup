@@ -1,5 +1,5 @@
 Name:    onlinebackup
-Version: 2.0.5
+Version: 2.0.9
 Release: 1%{?dist}
 Summary: stepping stone onlinebackup tool
 URL:     https://github.com/stepping-stone/online-backup
