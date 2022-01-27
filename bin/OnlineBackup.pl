@@ -55,8 +55,8 @@ my $configfile = "../conf/OnlineBackup.conf";
 my $logfile = "../log/OnlineBackup.log";
 my $localdir = "/";
 my $remotedir = "";
-my $currentprefix = "/incoming/";
-my $snapshotprefix = "/.snapshots/";
+my $currentprefix = "~/incoming/";
+my $snapshotprefix = "~/.snapshots/";
 my $lockfile = "/var/lock/OnlineBackup.lock";
 my $locktimeout = 23;
 my $tempdir="/var/tmp/";
@@ -662,7 +662,7 @@ my $cmd;
 if ($legacy == 1) {
   $cmd = "\"$rsyncbin\" --exclude-from=\"$excludefile\" --delete -rSlHtvze \"$sshbin -i $privkeyfile\"$chmodoption$remotepermoption$deleteexcludedoption --files-from=- \"$localdir\" $remoteuser\@$remotehost:" . OLBUtils::removeSpareSlashes($currentprefix . "/" . $remotedir) . "/";
 } else {
-  my $backupdir = '~/.snapshots/' . strftime '%Y%m%d', localtime;
+  my $backupdir = OLBUtils::removeSpareSlashes("$snapshotprefix/" . strftime('%Y%m%d', localtime) . "/$remotedir");
   $cmd = "'$rsyncbin'"
        . " --rsh '$sshbin -i $privkeyfile'"
        . ' --recursive --sparse --links --hard-links --times --verbose --compress' # Expanded version of the options "-rSlHtvz".
