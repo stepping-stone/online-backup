@@ -1,16 +1,16 @@
 Name:    onlinebackup
-Version: 2.0.10
+Version: 2.0.11
 Release: 1%{?dist}
 Summary: stepping stone onlinebackup tool
 URL:     https://github.com/stepping-stone/online-backup
 License: EUPL 1.1
 BuildArch: noarch
-Vendor: stepping stone GmbH
+Vendor: stepping stone AG
 
 Source0: https://github.com/stepping-stone/online-backup/archive/v%{version}.tar.gz
 
 %description
-This is the stepping stone GmbH online-backup utility.
+This is the stepping stone AG online backup utility.
 
 %prep
 %setup -n online-backup-%{version}
