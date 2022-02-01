@@ -12,12 +12,12 @@ VERBOSE=2
 # Please add your username to the following line in the form of:
 REMOTEUSER=xxxxxxx
 PRIVKEYFILE=/root/.ssh/id_rsa
-INCLUDEFILE=/usr/local/scripts/OnlineBackup/conf/OnlineBackupIncludeFiles.conf
-EXCLUDEFILE=/usr/local/scripts/OnlineBackup/conf/OnlineBackupExcludeFiles.conf
-PERMSCRIPT=/usr/local/scripts/OnlineBackup/tmp/SetPermissions.sh
+INCLUDEFILE=/etc/OnlineBackup/OnlineBackupIncludeFiles.conf
+EXCLUDEFILE=/etc/OnlineBackup/OnlineBackupExcludeFiles.conf
+PERMSCRIPT=/var/lib/OnlineBackup/SetPermissions.sh
 LOGFILE=/var/log/OnlineBackup.log
 LOCKFILE=/var/lock/OnlineBackup.lock
-PARTITIONFILE=/usr/local/scripts/OnlineBackup/tmp/Partitions.txt
+PARTITIONFILE=/var/lib/OnlineBackup/Partitions.txt
 LOCKTIMEOUT=23
 TEMPDIR=/var/tmp/
 RSYNCBIN=/usr/bin/rsync
