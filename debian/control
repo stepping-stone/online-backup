@@ -1,0 +1,27 @@
+Source: onlinebackup
+Section: admin
+Priority: optional
+Maintainer: Benedikt Trefzer <bendikt.trefzer@cirrax.com>
+Build-Depends: debhelper (>=12),
+               git,
+Standards-Version: 4.5.1
+Homepage: https://github.com/stepping-stone/online-backup
+Rules-Requires-Root: no
+
+Package: onlinebackup
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         perl-base (>>5),
+         libsys-hostname-long-perl,
+         rsync,
+         openssh-client,
+         fdisk,
+Description: stepping stone onlinebackup tool
+ This is the stepping stone GmbH online-backup utility.
+ .
+ It is primary intended to create backups using the backup 
+ infrastructure provided by stepping stone GmbH, but can
+ be used to transfer data to quite every remote host
+ with installed rsync and accessible over SSH accepting
+ private key authentication.

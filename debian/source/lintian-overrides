@@ -1,0 +1,9 @@
+onlinebackup source: unsupported-source-format 3.0 (git)
+onlinebackup source: debian-adds-git-control-dir .git/
+
+onlinebackup source: no-nmu-in-changelog
+
+onlinebackup source: source-nmu-has-incorrect-version-number *
+onlinebackup source: debian-watch-file-is-missing
+
+onlinebackup source: empty-upstream-sources

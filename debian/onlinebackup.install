@@ -1,0 +1,8 @@
+bin/OnlineBackup.pl   /usr/bin
+bin/OnlineRestore.pl  /usr/bin
+bin/OnlineRestore.sh  /usr/bin
+bin/OLBUtils.pm       /usr/share/perl5
+
+conf/OnlineBackup.conf.default             /etc/OnlineBackup
+conf/OnlineBackupExcludeFiles.conf.default /etc/OnlineBackup
+conf/OnlineBackupIncludeFiles.conf.default /etc/OnlineBackup
